@@ -1,9 +1,10 @@
 import scrapy
-#from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup
 import json
 import requests
 from scrapy.spider import BaseSpider
 from jobs_overview.items import JobsOverviewItem
+import re
 
 class Spider104(BaseSpider):
     name = 'jobbank_104'
@@ -19,17 +20,28 @@ class Spider104(BaseSpider):
         #[items['custName'] for items in res['data']['list']]
         
         for items in res['data']['list']:
-        	jobItem = JobsOverviewItem()
-        	jobItem['title'] = items['jobName']
-        	jobItem['address'] = items['jobAddress']
-        	jobItem['description'] = items['description']
-        	jobItem['education'] = items['optionEdu']
-        	jobItem['required_year'] = items['periodDesc']
-        	jobItem['apply_count'] = items['applyCnt']
-        	jobItem['comp_name'] = items['custName']
-        	jobItem['industry'] = items['coIndustryDesc']
-        	jobItem['salary'] = items['salaryDesc']
-        	jobItem['appearDate'] = items['appearDate']
-        	jobItem['link'] = items['link']['job']
-        	jobItems.append(jobItem)
+            jobItem = JobsOverviewItem()
+            jobItem['title'] = items['jobName']
+            jobItem['address'] = items['jobAddress']
+            jobItem['description'] = items['description']
+            jobItem['education'] = items['optionEdu']
+            jobItem['required_year'] = items['periodDesc']
+            jobItem['apply_count'] = items['applyCnt']
+            jobItem['comp_name'] = items['custName']
+            jobItem['industry'] = items['coIndustryDesc']
+            jobItem['salary'] = items['salaryDesc']
+            jobItem['appearDate'] = items['appearDate']
+            jobItem['link'] = 'https:'+items['link']['job']#items['link']['job']
+            #yield scrapy.Request(jobItem['link'], self.parse_detail)
+            result = requests.get(jobItem['link'])
+            c = result.content
+            res = BeautifulSoup(c, "html.parser")
+            other_index = int([i for i, x in enumerate([bool(re.search("其他條件", i)) for i in [ele.text for ele in res.find_all('dt')]]) if x][0])
+            jobItem['others'] = res.find_all('dd')[other_index].text
+            jobItem['datetime'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            jobItems.append(jobItem)
         return jobItems
+    def parse_detail(self, response):
+        res = BeautifulSoup(response.body)
+        other_index = int([i for i, x in enumerate([bool(re.search("其他條件", i)) for i in [ele.text for ele in res.find_all('dt')]]) if x][0])
+        return(res.find_all('dd')[other_index].text)

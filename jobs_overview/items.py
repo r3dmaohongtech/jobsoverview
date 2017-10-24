@@ -22,4 +22,6 @@ class JobsOverviewItem(scrapy.Item):
     salary = scrapy.Field()
     appearDate = scrapy.Field()
     link = scrapy.Field()
+    others = scrapy.Field()
+    datetime = scrapy.Field()
 
