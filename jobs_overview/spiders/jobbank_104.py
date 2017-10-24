@@ -5,6 +5,7 @@ import requests
 from scrapy.spider import BaseSpider
 from jobs_overview.items import JobsOverviewItem
 import re
+import datetime
 
 class Spider104(BaseSpider):
     name = 'jobbank_104'
